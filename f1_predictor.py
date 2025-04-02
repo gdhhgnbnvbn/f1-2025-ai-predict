@@ -189,6 +189,44 @@ class F1Predictor:
             if not race.endswith("COMPLETED")
         ]
         
+        # Team reliability factors (1.0 = perfect reliability, higher = more problems)
+        team_reliability = {
+            'Red Bull Racing': 1.05,  # Top team with best reliability
+            'Ferrari': 1.2,
+            'Mercedes': 1.15,
+            'McLaren': 1.2,
+            'Aston Martin': 1.25,
+            'Alpine': 1.3,
+            'Williams': 1.35,
+            'RB': 1.3,  # Ex AlphaTauri
+            'Kick Sauber': 1.35,
+            'Haas F1 Team': 1.4
+        }
+        
+        # Driver error probability factors (higher = more prone to errors)
+        driver_error_factor = {
+            'Max Verstappen': 0.04,  # Campione in carica
+            'Yuki Tsunoda': 0.08,    # Promosso in Red Bull
+            'Charles Leclerc': 0.06,
+            'Lewis Hamilton': 0.05,   # Esperienza in Ferrari
+            'George Russell': 0.07,
+            'Andrea Kimi Antonelli': 0.12,  # Rookie in Mercedes
+            'Lando Norris': 0.06,
+            'Oscar Piastri': 0.07,
+            'Fernando Alonso': 0.05,  # Esperienza
+            'Lance Stroll': 0.09,
+            'Pierre Gasly': 0.08,
+            'Jack Doohan': 0.11,      # Rookie
+            'Alexander Albon': 0.08,
+            'Carlos Sainz': 0.07,     # In Williams
+            'Esteban Ocon': 0.08,
+            'Oliver Bearman': 0.1,    # Rookie in Haas
+            'Nico Hulkenberg': 0.08,
+            'Gabriel Bortoleto': 0.12, # Rookie
+            'Liam Lawson': 0.09,      # In RB
+            'Isack Hadjar': 0.11      # Rookie in RB
+        }
+        
         # Simulate each remaining race
         race_results = []
         for race in remaining_races:
@@ -196,28 +234,83 @@ class F1Predictor:
             results = self.predict_2025_race(race)
             if results is None:
                 continue
+            
+            # Convert results to list for manipulation
+            race_order = results.to_dict('records')
+            
+            # Simulate race incidents
+            for i, driver in enumerate(race_order):
+                team = driver['Team']
+                driver_name = driver['Driver']
                 
-            # Assign points based on predicted finish order
-            race_points = []
-            for pos, row in results.iterrows():
+                # 1. DNF probability based on team reliability and track position
+                base_dnf_prob = 0.02  # 2% base probability
+                position_factor = 1 + (i * 0.01)  # Slightly higher chance of DNF for cars further back
+                team_factor = team_reliability.get(team, 1.2)
+                dnf_probability = base_dnf_prob * position_factor * team_factor
+                
+                if np.random.random() < dnf_probability:
+                    race_order[i]['DNF'] = True
+                    continue
+                
+                # 2. Driver errors (spins, missed braking points, etc.)
+                error_prob = driver_error_factor.get(driver_name, 0.1)
+                if np.random.random() < error_prob:
+                    # Lose 2-5 positions
+                    positions_lost = np.random.randint(2, 6)
+                    new_pos = min(len(race_order) - 1, i + positions_lost)
+                    # Swap positions
+                    race_order.insert(new_pos, race_order.pop(i))
+                
+                # 3. Random penalties (5 or 10 seconds)
+                if np.random.random() < 0.05:  # 5% chance of penalty
+                    penalty_time = np.random.choice([5, 10])
+                    # Simulate penalty effect on position
+                    positions_lost = np.random.randint(1, 4)
+                    new_pos = min(len(race_order) - 1, i + positions_lost)
+                    race_order.insert(new_pos, race_order.pop(i))
+                
+                # 4. Pit stop issues
+                if np.random.random() < 0.08:  # 8% chance of slow pit stop
+                    # Lose 1-3 positions
+                    positions_lost = np.random.randint(1, 4)
+                    new_pos = min(len(race_order) - 1, i + positions_lost)
+                    race_order.insert(new_pos, race_order.pop(i))
+            
+            # 5. Safety Car periods (30% chance per race)
+            if np.random.random() < 0.3:
+                # Safety Car bunches up the field and can lead to position swaps
+                # Randomly swap some positions in the top 10
+                for _ in range(np.random.randint(1, 4)):
+                    pos1, pos2 = np.random.randint(0, min(10, len(race_order)), size=2)
+                    race_order[pos1], race_order[pos2] = race_order[pos2], race_order[pos1]
+            
+            # Calculate points and update championship
+            for pos, driver in enumerate(race_order):
+                if driver.get('DNF', False):
+                    continue
+                    
                 points = 0
                 if pos < 10:  # Points positions
                     points_system = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
                     points = points_system[pos]
-                    # Add random fastest lap point (20% chance for top 10)
-                    if np.random.random() < 0.2:
+                    
+                    # Fastest lap point (more likely for top 5, but possible for others in top 10)
+                    fastest_lap_prob = 0.3 if pos < 5 else 0.1
+                    if np.random.random() < fastest_lap_prob:
                         points += 1
                 
-                championship_points[row['Driver']] += points
-                race_points.append(points)
+                championship_points[driver['Driver']] += points
             
-            # Store race results
-            race_results.append({
-                'Race': race,
-                'Winner': results.iloc[0]['Driver'],
-                'Second': results.iloc[1]['Driver'],
-                'Third': results.iloc[2]['Driver']
-            })
+            # Store race results (only non-DNF drivers)
+            valid_results = [d for d in race_order if not d.get('DNF', False)]
+            if len(valid_results) >= 3:
+                race_results.append({
+                    'Race': race,
+                    'Winner': valid_results[0]['Driver'],
+                    'Second': valid_results[1]['Driver'],
+                    'Third': valid_results[2]['Driver']
+                })
         
         # Create final championship standings
         final_standings = pd.DataFrame({
