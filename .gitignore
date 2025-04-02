@@ -6,3 +6,5 @@ f1data/
 
 # File di modello di machine learning
 f1_model.joblib
+
+PROMPT.txt

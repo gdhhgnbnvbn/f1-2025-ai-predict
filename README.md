@@ -1,72 +1,96 @@
-# F1 2025 Race Winner Predictor
+# F1 2025 Race Winner Predictor 🏎️
 
-This project implements a machine learning model to predict Formula 1 race winners for the 2025 season using historical data from 1950 to 2024.
+An AI-powered Formula 1 prediction system that uses machine learning to forecast race winners and championship outcomes for the 2025 F1 season. Built with Python, scikit-learn, and Streamlit.
 
 ## Features
 
-- Data preprocessing and feature engineering from multiple F1 datasets
-- Random Forest model for race winner prediction
-- Model evaluation with train/validation/test split (2022/2023/2024)
-- Interactive web interface using Streamlit
-- Feature importance visualization
-- Model persistence for future use
+- **Single Race Predictions**: Predict the outcome of any 2025 F1 race with detailed win probabilities
+- **Championship Simulation**: Simulate the entire 2025 season and get final standings predictions
+- **Real-time Updates**: Incorporates actual 2025 race results into predictions
+- **Interactive UI**: Modify grid positions to see how qualifying affects race outcomes
+- **Comprehensive Stats**: View driver and constructor championship predictions
 
-## Setup
+## Current 2025 Data
 
-1. Install the required dependencies:
+- Includes real results from the first two races:
+  - Australian GP (Melbourne): Won by Lando Norris (McLaren)
+  - Chinese GP (Shanghai): Won by Oscar Piastri (McLaren)
+- Updated 2025 driver lineup with all mid-season changes
+- Complete 24-race calendar with correct dates and venues
+
+## Installation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/yourusername/f1-2025-winner.git
+cd f1-2025-winner
+```
+
+2. Install required packages:
+
 ```bash
 pip install -r requirements.txt
 ```
 
-2. Make sure the F1 data files are in the `f1data` directory:
-- circuits.csv
-- constructor_results.csv
-- constructor_standings.csv
-- constructors.csv
-- driver_standings.csv
-- drivers.csv
-- lap_times.csv
-- pit_stops.csv
-- qualifying.csv
-- races.csv
-- results.csv
-- seasons.csv
-- sprint_results.csv
-- status.csv
+3. Run the Streamlit app:
 
-3. Run the Streamlit application:
 ```bash
-streamlit run f1_predictor.py
+python -m streamlit run f1_predictor.py
 ```
-
-## Model Features
-
-The prediction model uses the following features:
-- Grid position
-- Recent qualifying performance
-- Points moving average (last 3 races)
-- Circuit-specific performance
-- Championship points and position
-- Driver and constructor nationalities
 
 ## Usage
 
-1. Open the Streamlit interface in your browser
-2. Click "Train Model" to train and evaluate the model
-3. View the model performance metrics and feature importance
-4. The trained model will be saved for future use
+### Race Predictions
 
-## Model Performance
+1. Go to the "2025 Predictions" tab
+2. Select a race from the dropdown menu
+3. (Optional) Modify grid positions
+4. Click "Predict Race Results"
+5. View detailed predictions including win probabilities
 
-The model is evaluated using:
-- Accuracy on training data (1950-2022)
-- Accuracy on validation data (2023)
-- Accuracy on test data (2024)
+### Championship Predictions
 
-## Future Improvements
+1. Navigate to the "Championship Prediction" tab
+2. Click "Simulate Remaining Races"
+3. View:
+   - Final Driver's Championship standings
+   - Constructor's Championship standings
+   - Predicted podiums for all remaining races
+   - Points distribution visualization
 
-- Add weather data integration
-- Implement pit stop strategy analysis
-- Include sprint race results
-- Add driver head-to-head statistics
-- Implement continuous model updates during the 2025 season
+## How It Works
+
+The prediction system uses a Random Forest model trained on historical F1 data from 1950-2024, considering factors such as:
+
+- Qualifying position
+- Recent driver performance
+- Team performance
+- Circuit-specific statistics
+- Championship position
+- Historical results
+
+## Data Sources
+
+- Historical F1 data (1950-2024)
+- Real-time 2025 season results
+- Current driver and constructor information
+- Official 2025 F1 calendar
+
+## Contributing
+
+Feel free to open issues or submit pull requests with improvements.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Formula 1 for providing historical data
+- Streamlit for the amazing web framework
+- The F1 community for inspiration and feedback
+
+## Disclaimer
+
+This is a predictive model for entertainment purposes. Actual race results may vary significantly from predictions.
