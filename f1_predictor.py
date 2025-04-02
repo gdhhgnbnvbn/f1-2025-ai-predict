@@ -157,6 +157,90 @@ class F1Predictor:
         
         return results.sort_values('Win Probability', ascending=False).reset_index(drop=True)
     
+    def simulate_championship(self):
+        """Simulate the remaining races of the 2025 championship."""
+        if self.model is None or self.grid_2025 is None:
+            return None
+            
+        # Initialize championship points with actual results from 2025
+        championship_points = {driver: 0 for driver in self.grid_2025['driver_name']}
+        
+        # Add points from actual races
+        if self.results_2025 is not None:
+            for _, race in self.results_2025.iterrows():
+                # F1 points system
+                points = {
+                    1: 25, 2: 18, 3: 15, 4: 12, 5: 10,
+                    6: 8, 7: 6, 8: 4, 9: 2, 10: 1
+                }
+                if race['position'] in points:
+                    championship_points[race['driver_name']] += points[race['position']]
+                # Add point for fastest lap if applicable
+                if pd.notna(race['fastest_lap']):
+                    championship_points[race['driver_name']] += 1
+        
+        # Get remaining races
+        completed_races = set()
+        if self.results_2025 is not None:
+            completed_races = set(self.results_2025['race_name'].unique())
+        
+        remaining_races = [
+            race.split(" (")[0] for race in F1_CALENDAR_2025 
+            if not race.endswith("COMPLETED")
+        ]
+        
+        # Simulate each remaining race
+        race_results = []
+        for race in remaining_races:
+            # Predict race outcome
+            results = self.predict_2025_race(race)
+            if results is None:
+                continue
+                
+            # Assign points based on predicted finish order
+            race_points = []
+            for pos, row in results.iterrows():
+                points = 0
+                if pos < 10:  # Points positions
+                    points_system = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
+                    points = points_system[pos]
+                    # Add random fastest lap point (20% chance for top 10)
+                    if np.random.random() < 0.2:
+                        points += 1
+                
+                championship_points[row['Driver']] += points
+                race_points.append(points)
+            
+            # Store race results
+            race_results.append({
+                'Race': race,
+                'Winner': results.iloc[0]['Driver'],
+                'Second': results.iloc[1]['Driver'],
+                'Third': results.iloc[2]['Driver']
+            })
+        
+        # Create final championship standings
+        final_standings = pd.DataFrame({
+            'Driver': list(championship_points.keys()),
+            'Points': list(championship_points.values())
+        })
+        
+        # Add team information and sort by points
+        final_standings = pd.merge(
+            final_standings,
+            self.grid_2025[['driver_name', 'team_name']],
+            left_on='Driver',
+            right_on='driver_name'
+        ).drop('driver_name', axis=1)
+        
+        final_standings = final_standings.sort_values('Points', ascending=False).reset_index(drop=True)
+        
+        # Calculate constructor standings
+        constructor_standings = final_standings.groupby('team_name')['Points'].sum().reset_index()
+        constructor_standings = constructor_standings.sort_values('Points', ascending=False).reset_index(drop=True)
+        
+        return final_standings, constructor_standings, race_results
+    
     def train_model(self):
         # Get prepared features from data loader
         X_train, y_train, X_val, y_val, X_test, y_test = self.data_loader.prepare_features()
@@ -239,7 +323,7 @@ def main():
     st.sidebar.header('Model Controls')
     
     # Main content area tabs
-    tab1, tab2 = st.tabs(["Model Training", "2025 Predictions"])
+    tab1, tab2, tab3 = st.tabs(["Model Training", "2025 Predictions", "Championship Prediction"])
     
     with tab1:
         if st.button('Train New Model'):
@@ -384,6 +468,114 @@ def main():
                     prob_fig.update_traces(textposition='outside')
                     prob_fig.update_layout(height=400)
                     st.plotly_chart(prob_fig, use_container_width=True)
+
+    with tab3:
+        if predictor.model is None:
+            st.warning("Please train a model first or load an existing model.")
+            if st.button("Load Existing Model", key="load_model_championship"):
+                try:
+                    load_message = predictor.load_model()
+                    st.success(load_message)
+                except Exception as e:
+                    st.error(f"Error loading model: {str(e)}")
+        else:
+            st.subheader("2025 Championship Prediction")
+            
+            if st.button("Simulate Remaining Races"):
+                with st.spinner("Simulating championship..."):
+                    driver_standings, constructor_standings, race_results = predictor.simulate_championship()
+                    
+                    # Display Driver's Championship
+                    st.subheader("Predicted Driver's Championship Standings")
+                    fig_drivers = go.Figure(data=[
+                        go.Table(
+                            header=dict(
+                                values=['Position', 'Driver', 'Team', 'Points'],
+                                fill_color='darkblue',
+                                align='left',
+                                font=dict(color='white', size=12)
+                            ),
+                            cells=dict(
+                                values=[
+                                    list(range(1, len(driver_standings) + 1)),
+                                    driver_standings['Driver'],
+                                    driver_standings['team_name'],
+                                    driver_standings['Points']
+                                ],
+                                align='left',
+                                font=dict(size=11),
+                                height=30
+                            )
+                        )
+                    ])
+                    fig_drivers.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=600)
+                    st.plotly_chart(fig_drivers, use_container_width=True)
+                    
+                    # Display Constructor's Championship
+                    st.subheader("Predicted Constructor's Championship Standings")
+                    fig_constructors = go.Figure(data=[
+                        go.Table(
+                            header=dict(
+                                values=['Position', 'Team', 'Points'],
+                                fill_color='darkblue',
+                                align='left',
+                                font=dict(color='white', size=12)
+                            ),
+                            cells=dict(
+                                values=[
+                                    list(range(1, len(constructor_standings) + 1)),
+                                    constructor_standings['team_name'],
+                                    constructor_standings['Points']
+                                ],
+                                align='left',
+                                font=dict(size=11),
+                                height=30
+                            )
+                        )
+                    ])
+                    fig_constructors.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=400)
+                    st.plotly_chart(fig_constructors, use_container_width=True)
+                    
+                    # Display Race Winners
+                    st.subheader("Predicted Race Winners")
+                    race_results_df = pd.DataFrame(race_results)
+                    fig_races = go.Figure(data=[
+                        go.Table(
+                            header=dict(
+                                values=['Race', 'Winner', 'Second', 'Third'],
+                                fill_color='darkblue',
+                                align='left',
+                                font=dict(color='white', size=12)
+                            ),
+                            cells=dict(
+                                values=[
+                                    race_results_df['Race'],
+                                    race_results_df['Winner'],
+                                    race_results_df['Second'],
+                                    race_results_df['Third']
+                                ],
+                                align='left',
+                                font=dict(size=11),
+                                height=30
+                            )
+                        )
+                    ])
+                    fig_races.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=800)
+                    st.plotly_chart(fig_races, use_container_width=True)
+                    
+                    # Add points visualization
+                    st.subheader("Championship Points Distribution")
+                    points_fig = px.bar(
+                        driver_standings.head(10),
+                        x='Driver',
+                        y='Points',
+                        title='Top 10 Drivers - Championship Points',
+                        color='team_name',
+                        text='Points'
+                    )
+                    points_fig.update_traces(textposition='outside')
+                    points_fig.update_layout(height=400)
+                    st.plotly_chart(points_fig, use_container_width=True)
 
 if __name__ == "__main__":
     main()

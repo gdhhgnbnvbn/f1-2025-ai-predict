@@ -1,0 +1,8 @@
+# Directory di cache di Python
+__pycache__/
+
+# Dati grezzi o generati
+f1data/
+
+# File di modello di machine learning
+f1_model.joblib
